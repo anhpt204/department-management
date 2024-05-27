@@ -1,0 +1,6 @@
+TUYA_PROJECT_CODE = "p1711937056824ppaqtv"
+CLIENT_ID = "9qakmce4u85uekd53yg5"
+CLIENT_SECRET = "31ef332315c541e98092a5d84f126165"
+ENDPOINT = "https://openapi.tuyaus.com"
+USERNAME = "anh.pt204@gmail.com"
+PASSWORD = "2Pp&7-9@TuN?72j-Dev1"

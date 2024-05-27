@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  department-management:
+    container_name: department-management
+    image: hvhc/department-management.latest
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - db_network
+      - web_network
+  nginx:
+    container_name: nginx
+    restart: always
+    image: "nginx:latest"
+    ports:
+      - "5090:5085"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    networks:
+      - web_network
+    depends_on: 
+      - department-management
+  db:
+    image: postgres:12
+    env_file:
+      - .env
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "60014:5432"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.hostname == dev
+    volumes:
+      - /m/department-management/db:/var/lib/postgresql/data
+    networks: 
+      - db_network
+
+networks:
+  db_network:
+    driver: bridge
+  web_network:
+    driver: bridge
+ 
