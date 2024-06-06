@@ -30,69 +30,32 @@
             <th>Thành tiền</th>
           </thead>
           <tbody >
-            <tr>
-                <td>1</td>
-                <td style="text-align:left">Tiền phòng</td>
-                <td>1</td>
-                <td style="text-align:right">{{contract.rent_fee}}</td>
-                <td style="text-align:right">{{invoice.rent_fee}}</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td style="text-align:left">Internet</td>
-                <td>1</td>
-                <td style="text-align:right">{{contract.internet_fee}}</td>
-                <td style="text-align:right">{{invoice.internet_fee}}</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td style="text-align:left">Nước sinh hoạt</td>
-                <td>{{contract.occupants}}</td>
-                <td style="text-align:right">{{contract.water_fee}}</td>
-                <td style="text-align:right">{{invoice.water_fee}}</td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td style="text-align:left">Vệ sinh chung</td>
-                <td>{{contract.occupants}}</td>
-                <td style="text-align:right">{{contract.cleaning_fee}}</td>
-                <td style="text-align:right">{{invoice.cleaning_fee}}</td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td style="text-align:left">Sạc xe điện</td>
-                <td>1</td>
-                <td style="text-align:right">{{contract.charging_fee}}</td>
-                <td style="text-align:right">{{invoice.charging_fee}}</td>
-            </tr>
-            <tr>
-                <td>6</td>
-                <td style="text-align:left">Tiền điện</td>
-                <td>{{electricity}} ({{invoice.electricity_end}}-{{invoice.electricity_start}})</td>
-                <td style="text-align:right">{{contract.electricity_fee}}</td>
-                <td style="text-align:right">{{invoice.electricity_fee}}</td>
-            </tr>
-            <tr>
-                <td>7</td>
-                <td style="text-align:left">Khác</td>
-                <td>1</td>
-                <td style="text-align:right">{{contract.other_fee}}</td>
-                <td style="text-align:right">{{invoice.other_fee}}</td>
-            </tr>
-            <tr>
+            {% for service in services %}
+              <tr>
+                <td>{{service.0}}</td>
+                <td style="text-align:left">{{service.1}}</td>
+                <td>{{service.2}}</td>
+                <td style="text-align:right">{{service.3}}</td>
+                <td style="text-align:right">{{service.4}}</td>
+              </tr>          
+            {% endfor %}
+
+            {% if invoice.previous_debt > 0 %}
+              <tr>
                 <td></td>
                 <td >Nợ kỳ trước</td>
                 <td></td>
                 <td></td>
                 <td style="text-align:right">{{invoice.previous_debt}}</td>
-            </tr>
+              </tr>          
+            {% endif %}
             <tr>
                 <td></td>
                 <td style="font-weight: bold;">TỔNG</td>
                 <td></td>
                 <td></td>
                 <td style="text-align:right; font-weight: bold;">{{invoice.total_amount}}</td>
-            </tr>            
+            </tr>   
           </tbody>
         </table>
         <div style="font-weight: bold;">Đề nghị quý khách vui lòng thanh toán đủ số tiền trong vòng 5 ngày kể từ ngày gửi hóa đơn này.</div>
