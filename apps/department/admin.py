@@ -1,4 +1,6 @@
+from collections.abc import Sequence
 from django.contrib import admin
+from django.http import HttpRequest
 from .models import (
     Room,
     Customer,
@@ -6,8 +8,9 @@ from .models import (
     Contract,
     ContractCustomer,
     Invoice,
-    Payment,
 )
+
+from django.utils.html import format_html
 
 
 class RoomAdmin(admin.ModelAdmin):
@@ -109,14 +112,22 @@ class InvoiceAdmin(admin.ModelAdmin):
         "invoice_date",
         "electricity_start",
         "electricity_end",
-        "unpaid_amount",
+        "previous_debt",
         "total_amount",
+        "paid_amount",
+        "unpaid_amount",
+        "is_paid",
+        "show_invoice",
+    ]
+    list_filter = [
+        "contract__room",
+        "is_paid",
     ]
     readonly_fields = (
         "contract",
         "invoice_date",
         "electricity_start",
-        "electricity_end",
+        # "electricity_end",
         "rent_fee",
         "electricity_fee",
         "water_fee",
@@ -128,6 +139,45 @@ class InvoiceAdmin(admin.ModelAdmin):
         "unpaid_amount",
         "total_amount",
     )
+    fieldsets = [
+        (
+            None,
+            {"fields": ["contract", "invoice_date"]},
+        ),
+        (
+            "Electricity",
+            {"fields": ["electricity_start", "electricity_end"]},
+        ),
+        (
+            "Fee",
+            {
+                "fields": [
+                    "rent_fee",
+                    "electricity_fee",
+                    "water_fee",
+                    "internet_fee",
+                    "cleaning_fee",
+                    "charging_fee",
+                    "other_fee",
+                    "other_fee_desc",
+                ]
+            },
+        ),
+        (
+            "Payment",
+            {
+                "fields": [
+                    "paid_amount",
+                    "unpaid_amount",
+                    "total_amount",
+                    "is_paid",
+                ]
+            },
+        ),
+    ]
+
+    def show_invoice(self, obj):
+        return format_html('<a href="/department/invoices/%d/"> Show </a>' % (obj.pk))
 
 
 admin.site.register(Room, RoomAdmin)

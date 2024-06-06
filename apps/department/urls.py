@@ -7,6 +7,9 @@ urlpatterns = [
     # path('admin/department', admin.site)
     # The home page
     path("worker", worker.update_electricity, name="worker"),
+    re_path(
+        "invoices/(?P<invoice_pk>\d+)/$", views.show_invoice_detail, name="show_invoice"
+    ),
     # Matches any html file
     # re_path(r'^.*\.*', views.pages, name='pages'),
 ]

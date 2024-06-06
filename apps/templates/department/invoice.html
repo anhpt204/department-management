@@ -1,0 +1,106 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+
+{% block content %}
+  <!--     Fonts and icons     -->
+  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+  <!-- CSS Files -->
+  <link href="/static/assets/css/material-dashboard.css?v=2.1.2" rel="stylesheet" />
+  <!-- CSS Just for demo purpose, don't include it in your project -->
+  <link href="/static/assets/demo/demo.css" rel="stylesheet" />
+
+<div class="col-lg-6 col-md-12" style="text-align:center; ">
+    <div class="card">
+      <div class="card-header card-header-success"  style="font-weight: bold;">
+        <h4 class="card-title"  style="font-weight: bold;">PHIẾU THANH TOÁN TIỀN PHÒNG</h4>
+        <p class="card-category">
+            {{invoice.invoice_date|date:"d/m/Y"}} - {{end_date|date:"d/m/Y"}} <br /> 
+            Phòng: {{contract.room.room_number}}
+        </p>
+      </div>
+      <div class="card-body table-responsive"   style="color:black">
+        <table class="table table-hover">
+          <thead class="text-success">
+            <th>STT</th>
+            <th>Dịch vụ</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Thành tiền</th>
+          </thead>
+          <tbody >
+            <tr>
+                <td>1</td>
+                <td style="text-align:left">Tiền phòng</td>
+                <td>1</td>
+                <td style="text-align:right">{{contract.rent_fee}}</td>
+                <td style="text-align:right">{{invoice.rent_fee}}</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td style="text-align:left">Internet</td>
+                <td>1</td>
+                <td style="text-align:right">{{contract.internet_fee}}</td>
+                <td style="text-align:right">{{invoice.internet_fee}}</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td style="text-align:left">Nước sinh hoạt</td>
+                <td>{{contract.occupants}}</td>
+                <td style="text-align:right">{{contract.water_fee}}</td>
+                <td style="text-align:right">{{invoice.water_fee}}</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td style="text-align:left">Vệ sinh chung</td>
+                <td>{{contract.occupants}}</td>
+                <td style="text-align:right">{{contract.cleaning_fee}}</td>
+                <td style="text-align:right">{{invoice.cleaning_fee}}</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td style="text-align:left">Sạc xe điện</td>
+                <td>1</td>
+                <td style="text-align:right">{{contract.charging_fee}}</td>
+                <td style="text-align:right">{{invoice.charging_fee}}</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td style="text-align:left">Tiền điện</td>
+                <td>{{electricity}} ({{invoice.electricity_end}}-{{invoice.electricity_start}})</td>
+                <td style="text-align:right">{{contract.electricity_fee}}</td>
+                <td style="text-align:right">{{invoice.electricity_fee}}</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td style="text-align:left">Khác</td>
+                <td>1</td>
+                <td style="text-align:right">{{contract.other_fee}}</td>
+                <td style="text-align:right">{{invoice.other_fee}}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td >Nợ kỳ trước</td>
+                <td></td>
+                <td></td>
+                <td style="text-align:right">{{invoice.previous_debt}}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="font-weight: bold;">TỔNG</td>
+                <td></td>
+                <td></td>
+                <td style="text-align:right; font-weight: bold;">{{invoice.total_amount}}</td>
+            </tr>            
+          </tbody>
+        </table>
+        <div style="font-weight: bold;">Đề nghị quý khách vui lòng thanh toán đủ số tiền trong vòng 5 ngày kể từ ngày gửi hóa đơn này.</div>
+        <div style="font-weight: bold;">Mọi thắc mắc xin liên hệ sđt: 0344.350.998 hoặc 0989.686.885.</div>
+        <img class="img" src="/static/assets/img/acb.png" style="width:400px;height:450px;" />
+      </div>
+    </div>
+  </div>
+
+
+{% endblock content %}

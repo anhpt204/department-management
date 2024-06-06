@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 # Create your models here.
@@ -16,6 +18,11 @@ class Room(models.Model):
     )
 
     status = models.BooleanField(verbose_name="Status", default=True)
+
+    class Meta:
+        ordering = [
+            "room_number",
+        ]
 
     def __str__(self):
         return self.room_number
@@ -66,6 +73,9 @@ class Contract(models.Model):
     other_fee_desc = models.CharField(max_length=500, null=True, blank=True)
     customers = models.ManyToManyField(Customer, through="ContractCustomer")
 
+    class Meta:
+        ordering = ["-start_date"]
+
     def __str__(self) -> str:
         return f"{self.room.room_number}: {self.start_date} => {self.end_date}"
 
@@ -81,22 +91,57 @@ class Invoice(models.Model):
     invoice_date = models.DateField()
     electricity_start = models.DecimalField(max_digits=10, decimal_places=2)
     electricity_end = models.DecimalField(max_digits=10, decimal_places=2)
-    rent_fee = models.PositiveIntegerField()  # Tiền thuê phòng
-    electricity_fee = models.PositiveIntegerField()
-    water_fee = models.PositiveIntegerField()
-    internet_fee = models.PositiveIntegerField()
-    cleaning_fee = models.PositiveIntegerField()
-    charging_fee = models.PositiveIntegerField()
+    rent_fee = models.PositiveIntegerField(default=0)  # Tiền thuê phòng
+    electricity_fee = models.PositiveIntegerField(default=0)
+    water_fee = models.PositiveIntegerField(default=0)
+    internet_fee = models.PositiveIntegerField(default=0)
+    cleaning_fee = models.PositiveIntegerField(default=0)
+    charging_fee = models.PositiveIntegerField(default=0)
     other_fee = models.PositiveIntegerField(default=0)
     other_fee_desc = models.CharField(max_length=500, null=True, blank=True)
-    unpaid_amount = models.PositiveIntegerField(default=0)  # Tiền nợ kỳ trước
-    total_amount = models.PositiveIntegerField()  # Tổng số tiền trong kỳ
+    previous_debt = models.PositiveIntegerField(default=0)  # Nợ kỳ trước
+    paid_amount = models.PositiveIntegerField(default=0)  # Tiền đã tt trong kỳ
+    unpaid_amount = models.PositiveIntegerField(default=0)  # Tiền còn thiếu
+    total_amount = models.PositiveIntegerField(default=0)  # Tổng số tiền trong kỳ
+    paid_date = models.DateField(null=True, blank=True)
+    is_paid = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-invoice_date", "is_paid"]
+
+    def save(self, *args, **kwargs):
+        if self.is_paid == False:
+            self.update_total_amount()
+        super().save(*args, **kwargs)
+
+    def update_total_amount(self):
+        self.rent_fee = self.contract.rent_fee
+        self.electricity_fee = (
+            self.electricity_end - self.electricity_start
+        ) * self.contract.electricity_fee
+        self.water_fee = self.contract.occupants * self.contract.water_fee
+        self.internet_fee = self.contract.internet_fee
+        self.cleaning_fee = self.contract.occupants * self.contract.cleaning_fee
+        self.charging_fee = self.contract.charging_fee
+        self.other_fee = self.contract.other_fee
+
+        self.total_amount = (
+            self.previous_debt
+            + self.rent_fee
+            + self.electricity_fee
+            + self.water_fee
+            + self.internet_fee
+            + self.cleaning_fee
+            + self.charging_fee
+            + self.other_fee
+        )
+        self.unpaid_amount = self.total_amount - self.paid_amount
 
 
-class Payment(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    payment_date = models.DateField()
-    amount = models.IntegerField()  # Số tiền thanh toán
+# class Payment(models.Model):
+#     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+#     payment_date = models.DateField()
+#     amount = models.IntegerField()  # Số tiền thanh toán
 
 
 # class Equipment(models.Model):
