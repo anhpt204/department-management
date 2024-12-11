@@ -72,13 +72,12 @@ class Contract(models.Model):
     other_fee = models.PositiveIntegerField(default=0)
     other_fee_desc = models.CharField(max_length=500, null=True, blank=True)
     customers = models.ManyToManyField(Customer, through="ContractCustomer")
-
+    published = models.BooleanField(default=True)
     class Meta:
         ordering = ["-start_date"]
 
     def __str__(self) -> str:
         return f"{self.room.room_number}: {self.start_date} => {self.end_date}"
-
 
 class ContractCustomer(models.Model):
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
@@ -105,6 +104,8 @@ class Invoice(models.Model):
     total_amount = models.PositiveIntegerField(default=0)  # Tổng số tiền trong kỳ
     paid_date = models.DateField(null=True, blank=True)
     is_paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=datetime.now)
+    updated_at = models.DateTimeField(default=datetime.now)
 
     class Meta:
         ordering = ["-invoice_date", "is_paid"]
@@ -112,6 +113,10 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if self.is_paid == False:
             self.update_total_amount()
+        else:
+            self.paid_amount = self.total_amount
+            self.unpaid_amount  = 0
+        self.updated_at = datetime.now()
         super().save(*args, **kwargs)
 
     def update_total_amount(self):
@@ -124,6 +129,7 @@ class Invoice(models.Model):
         self.cleaning_fee = self.contract.occupants * self.contract.cleaning_fee
         self.charging_fee = self.contract.charging_fee
         self.other_fee = self.contract.other_fee
+        self.previous_debt = get_previous_debt(current_date=self.invoice_date, room=self.contract.room)
 
         self.total_amount = (
             self.previous_debt
@@ -137,6 +143,20 @@ class Invoice(models.Model):
         )
         self.unpaid_amount = self.total_amount - self.paid_amount
 
+def get_previous_debt(current_date, room):
+    active_contract = room.contract_set.filter(
+        start_date__lte=current_date, end_date__gte=current_date
+    ).first()
+    if active_contract == None:
+        return 0
+    
+    latest_invoice = active_contract.invoice_set.order_by(
+        "-invoice_date"
+    ).first()
+
+    if latest_invoice == None:
+        return 0
+    return latest_invoice.unpaid_amount
 
 # class Payment(models.Model):
 #     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)

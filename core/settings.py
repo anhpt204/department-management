@@ -136,6 +136,9 @@ NUMBER_GROUPING = 3
 
 DATE_FORMAT = "d/m/Y"
 DATE_INPUT_FORMATS = ("%d/%m/%Y",)
+DATETIME_FORMAT = (( 'd/m/Y H:i' ))
+DATETIME_INPUT_FORMATS = (('%d/%m/%Y %H:%i'),)
+
 
 #############################################################
 # SRC: https://devcenter.heroku.com/articles/django-assets

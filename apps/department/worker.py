@@ -5,10 +5,12 @@ from .env import (
     CLIENT_SECRET,
 )
 from tuya_connector import TuyaOpenAPI, TuyaOpenPulsar, TuyaCloudPulsarTopic
-from .models import Room, Electricity, Invoice
+from .models import Room, Electricity, Invoice, Contract, get_previous_debt
 import datetime
 from dateutil.relativedelta import relativedelta
 import decimal
+from pytz import timezone
+from django.utils import timezone as djtz
 
 from django.http import JsonResponse
 
@@ -32,12 +34,26 @@ def get_electricity(device_id):
 
     # print(resp)
 
+def update_expired_contracts(request):
+    try:
+        today = datetime.datetime.now().date()
+        expired_contracts = Contract.objects.filter(end_date__lt=today)
+        for expired_contract in expired_contracts:
+            expired_contract.published = False
+            expired_contract.save()
+        return JsonResponse({"status": "success"}, status=200)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
 
 def update_electricity(request):
     try:
-        today = datetime.datetime.now().date()
+        today = datetime.datetime.now().astimezone(timezone('Asia/Bangkok')).date()
+        print('today: ', today)
         rooms = Room.objects.filter()
         for room in rooms:
+            print('Room: ', room.room_number)
             # 1. check and get electricity
             electricity = Electricity.objects.filter(room=room, date=today).first()
             energy_total = 0
@@ -49,13 +65,25 @@ def update_electricity(request):
             active_contract = room.contract_set.filter(
                 start_date__lte=today, end_date__gte=today
             ).first()
+            
+            print('active contract: ', active_contract)
+            
+            local_today = datetime.datetime.now().astimezone(timezone('Asia/Bangkok'))
+            print('today: ', local_today)
+
             is_today_billing_day = (
-                active_contract != None and today.day == active_contract.start_date.day
+                active_contract != None and local_today.day == active_contract.start_date.day
             )
-            need_create_new_invoice = is_today_billing_day
+            need_create_new_invoice = False
+            print("today is billing day: ", is_today_billing_day)
+            if is_today_billing_day:
+                invoice_today = active_contract.invoice_set.filter(invoice_date=today).first()
+                print('invoice today: ', invoice_today)
+                need_create_new_invoice = invoice_today == None
 
             if need_get_electricity:
                 energy_total, ok = get_electricity(room.electric_device_id)
+                print('get electricity ok? ', ok)
                 need_create_new_invoice = need_create_new_invoice and ok
 
                 if ok:
@@ -65,10 +93,11 @@ def update_electricity(request):
                     new_electricity.save()
 
             # 2. create invoice if necessary
+            print('need create new invoice: ', need_create_new_invoice)
             if need_create_new_invoice:
                 electricity_start = active_contract.electricity_start_reading
                 is_not_first_invoice = active_contract.invoice_set.first() != None
-                previous_debt = 0
+                previous_debt = get_previous_debt(current_date=today, room=room)
 
                 if is_not_first_invoice:
                     last_billing_date = today - relativedelta(months=1)
@@ -77,17 +106,13 @@ def update_electricity(request):
                         date=last_billing_date,
                     ).first()
 
+                    print('electricity of last billing date: ', electricity_of_last_billing_date.electricity_reading)
                     if electricity_of_last_billing_date == None:
-                        break
+                        continue
 
                     electricity_start = (
                         electricity_of_last_billing_date.electricity_reading
                     )
-
-                    latest_invoice = active_contract.invoice_set.order_by(
-                        "-invoice_date"
-                    ).first()
-                    previous_debt = latest_invoice.unpaid_amount
 
                 new_invoice = Invoice(
                     contract=active_contract,
@@ -98,6 +123,8 @@ def update_electricity(request):
                     previous_debt=previous_debt,
                     paid_amount=0,
                     is_paid=False,
+                    created_at=datetime.datetime.now(tz=djtz.utc),
+                    updated_at=datetime.datetime.now(tz=djtz.utc)
                 )
                 new_invoice.save()
         return JsonResponse({"status": "success"}, status=200)

@@ -11,18 +11,18 @@ def show_invoice_detail(request, invoice_pk):
     invoice = Invoice.objects.get(pk=invoice_pk)
     contract = invoice.contract
     services = [
-        [1, "Tiền phòng", 1, contract.rent_fee, invoice.rent_fee],
+        [1, "Phòng", 1, contract.rent_fee, invoice.rent_fee],
         [2, "Internet", 1, contract.internet_fee, invoice.internet_fee],
         [
             3,
-            "Nước sinh hoạt",
+            "Nước",
             contract.occupants,
             contract.water_fee,
             invoice.water_fee,
         ],
         [
             4,
-            "Vệ sinh chung",
+            "Vệ Sinh",
             contract.occupants,
             contract.cleaning_fee,
             invoice.cleaning_fee,
@@ -35,7 +35,7 @@ def show_invoice_detail(request, invoice_pk):
         services.append(
             [
                 counter,
-                "Sạc xe điện",
+                "Sạc XĐ",
                 1,
                 contract.charging_fee,
                 invoice.charging_fee,

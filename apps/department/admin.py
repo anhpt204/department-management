@@ -64,7 +64,7 @@ class ContractAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Date", {"fields": ("start_date", "end_date")}),
+        ("Date", {"fields": ("start_date", "end_date", "published")}),
         (
             "Service fees",
             {
@@ -86,6 +86,7 @@ class ContractAdmin(admin.ModelAdmin):
         "room",
         "start_date",
         "end_date",
+        "published",
         "electricity_start_reading",
         "occupants",
         "security_deposit",
@@ -99,11 +100,17 @@ class ContractAdmin(admin.ModelAdmin):
         "other_fee_desc",
     ]
 
+    list_filter = [
+        "room",
+        "published",
+    ]
+    
     inlines = [
         ContractCustomerInline,
     ]
 
     save_as = True
+
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -118,11 +125,14 @@ class InvoiceAdmin(admin.ModelAdmin):
         "unpaid_amount",
         "is_paid",
         "show_invoice",
+        "created_at",
+        "updated_at"
     ]
     list_filter = [
         "contract__room",
         "is_paid",
     ]
+    # list_editable = ['is_paid',]
     readonly_fields = (
         "contract",
         "invoice_date",

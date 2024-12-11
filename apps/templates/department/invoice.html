@@ -1,6 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
+{% block title %}{% endblock title %}
+
+{% block branding %}{% endblock branding %}
+
+{% block header_content %}{% endblock header_content %}
 
 {% block content %}
   <!--     Fonts and icons     -->
@@ -11,56 +16,54 @@
   <!-- CSS Just for demo purpose, don't include it in your project -->
   <link href="/static/assets/demo/demo.css" rel="stylesheet" />
 
-<div class="col-lg-6 col-md-12" style="text-align:center; ">
+<div class="col-lg-6 col-md-12" style="text-align:center; padding-right:2px; padding-left:2px">
     <div class="card">
-      <div class="card-header card-header-success"  style="font-weight: bold;">
-        <h4 class="card-title"  style="font-weight: bold;">PHIẾU THANH TOÁN TIỀN PHÒNG</h4>
-        <p class="card-category">
-            {{invoice.invoice_date|date:"d/m/Y"}} - {{end_date|date:"d/m/Y"}} <br /> 
-            Phòng: {{contract.room.room_number}}
-        </p>
+      <div style="font-weight: bold; color:#000080;">
+        <h4 class="card-title"  style="font-weight:bold; color:#000080; padding-top: 10px;">PHIẾU THANH TOÁN TIỀN PHÒNG</h4>
+        <p style="margin-bottom: 0;">{{invoice.invoice_date|date:"d/m/Y"}} - {{end_date|date:"d/m/Y"}} <br/> 
+        Phòng: {{contract.room.room_number}} </p>
       </div>
-      <div class="card-body table-responsive"   style="color:black">
+      <div class="table-responsive">
         <table class="table table-hover">
-          <thead class="text-success">
-            <th>STT</th>
-            <th>Dịch vụ</th>
-            <th>Số lượng</th>
-            <th>Đơn giá</th>
-            <th>Thành tiền</th>
+          <theadstyle="color:black; padding: 4px 5px;" >
+            <th style="padding: 4px 5px;">#</th>
+            <th style="padding: 4px 5px;">Dịch vụ</th>
+            <th style="padding: 4px 5px;">SL</th>
+            <th style="padding: 4px 5px;">Đơn giá</th>
+            <th style="padding: 4px 5px;">TT</th>
           </thead>
-          <tbody >
+          <tbody style="color:black; padding: 4px 5px;">
             {% for service in services %}
               <tr>
-                <td>{{service.0}}</td>
-                <td style="text-align:left">{{service.1}}</td>
-                <td>{{service.2}}</td>
-                <td style="text-align:right">{{service.3}}</td>
-                <td style="text-align:right">{{service.4}}</td>
+                <td style="padding: 4px 5px;">{{service.0}}</td>
+                <td style="text-align:left; padding: 4px 5px;">{{service.1}}</td>
+                <td style="padding: 4px 5px;">{{service.2}}</td>
+                <td style="text-align:right;padding: 4px 5px;">{{service.3}}</td>
+                <td style="text-align:right;padding: 4px 5px;">{{service.4}}</td>
               </tr>          
             {% endfor %}
 
             {% if invoice.previous_debt > 0 %}
               <tr>
                 <td></td>
-                <td >Nợ kỳ trước</td>
+                <td style="text-align:left; padding: 4px 5px;">Nợ kỳ trước</td>
                 <td></td>
                 <td></td>
-                <td style="text-align:right">{{invoice.previous_debt}}</td>
+                <td style="text-align:right;padding: 4px 5px;">{{invoice.previous_debt}}</td>
               </tr>          
             {% endif %}
             <tr>
                 <td></td>
-                <td style="font-weight: bold;">TỔNG</td>
+                <td style="font-weight: bold;;padding: 8px 5px;">TỔNG</td>
                 <td></td>
                 <td></td>
-                <td style="text-align:right; font-weight: bold;">{{invoice.total_amount}}</td>
+                <td style="text-align:right; font-weight: bold;;padding: 4px 5px;">{{invoice.total_amount}}</td>
             </tr>   
           </tbody>
         </table>
-        <div style="font-weight: bold;">Đề nghị quý khách vui lòng thanh toán đủ số tiền trong vòng 5 ngày kể từ ngày gửi hóa đơn này.</div>
-        <div style="font-weight: bold;">Mọi thắc mắc xin liên hệ sđt: 0344.350.998 hoặc 0989.686.885.</div>
-        <img class="img" src="/static/assets/img/acb.png" style="width:400px;height:450px;" />
+        <div style="font-weight: bold;">Vui lòng thanh toán trong vòng 5 ngày.</div>
+        <div style="font-weight: bold;">Mọi thắc mắc xin liên hệ sđt: 0344.350.998.</div>
+        <img class="img" src="/static/assets/img/acb.png" style="width:200px;height:230px;" />
       </div>
     </div>
   </div>
