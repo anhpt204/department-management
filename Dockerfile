@@ -20,6 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # running migrations
 RUN python manage.py migrate
+RUN python manage.py collectstatic --clear --noinput
 
 # ENTRYPOINT ["./docker-entrypoint.sh"] 
 
