@@ -178,6 +178,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "paid_amount",
+                    "previous_debt",
                     "unpaid_amount",
                     "total_amount",
                     "is_paid",
