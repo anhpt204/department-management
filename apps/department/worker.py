@@ -97,7 +97,7 @@ def update_electricity(request):
             if need_create_new_invoice:
                 electricity_start = active_contract.electricity_start_reading
                 is_not_first_invoice = active_contract.invoice_set.first() != None
-                previous_debt = get_previous_debt(current_date=today, room=room)
+                previous_debt = get_previous_debt(current_invoice=None, current_date=today, room=room)
 
                 if is_not_first_invoice:
                     last_billing_date = today - relativedelta(months=1)

@@ -42,6 +42,7 @@ class CustomerAdmin(admin.ModelAdmin):
 
 class ElectricityAdmin(admin.ModelAdmin):
     list_display = ["room", "date", "electricity_reading"]
+    list_filter = ['room', 'date']
 
 
 class ContractCustomerInline(admin.TabularInline):
@@ -133,22 +134,22 @@ class InvoiceAdmin(admin.ModelAdmin):
         "is_paid",
     ]
     # list_editable = ['is_paid',]
-    readonly_fields = (
-        "contract",
-        "invoice_date",
-        "electricity_start",
-        # "electricity_end",
-        "rent_fee",
-        "electricity_fee",
-        "water_fee",
-        "internet_fee",
-        "cleaning_fee",
-        "charging_fee",
-        "other_fee",
-        "other_fee_desc",
-        "unpaid_amount",
-        "total_amount",
-    )
+    # readonly_fields = (
+    #     "contract",
+    #     "invoice_date",
+    #     "electricity_start",
+    #     # "electricity_end",
+    #     "rent_fee",
+    #     "electricity_fee",
+    #     "water_fee",
+    #     "internet_fee",
+    #     "cleaning_fee",
+    #     "charging_fee",
+    #     "other_fee",
+    #     "other_fee_desc",
+    #     "unpaid_amount",
+    #     "total_amount",
+    # )
     fieldsets = [
         (
             None,

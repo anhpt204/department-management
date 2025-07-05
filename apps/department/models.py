@@ -129,7 +129,7 @@ class Invoice(models.Model):
         self.cleaning_fee = self.contract.occupants * self.contract.cleaning_fee
         self.charging_fee = self.contract.charging_fee
         self.other_fee = self.contract.other_fee
-        self.previous_debt = self._get_previous_debt(current_date=self.invoice_date, room=self.contract.room)
+        self.previous_debt = get_previous_debt(current_invoice=self, current_date=self.invoice_date, room=self.contract.room)
 
         self.total_amount = (
             self.previous_debt
@@ -143,22 +143,22 @@ class Invoice(models.Model):
         )
         self.unpaid_amount = self.total_amount - self.paid_amount
 
-    def _get_previous_debt(self, current_date, room):
-        active_contract = room.contract_set.filter(
-            start_date__lte=current_date, end_date__gte=current_date
-        ).first()
-        if active_contract == None:
-            return 0
-        
-        latest_invoice = active_contract.invoice_set.order_by(
-            "-invoice_date"
-        ).first()
+def get_previous_debt(current_invoice, current_date, room):
+    active_contract = room.contract_set.filter(
+        start_date__lte=current_date, end_date__gte=current_date
+    ).first()
+    if active_contract == None:
+        return 0
+    
+    latest_invoice = active_contract.invoice_set.order_by(
+        "-invoice_date"
+    ).first()
 
-        if latest_invoice == None:
-            return 0
-        if latest_invoice.id == self.id:
-            return 0
-        return latest_invoice.unpaid_amount
+    if latest_invoice == None:
+        return 0
+    if current_invoice and latest_invoice.id == current_invoice.id:
+        return 0
+    return latest_invoice.unpaid_amount
 
 # class Payment(models.Model):
 #     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
