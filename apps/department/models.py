@@ -5,8 +5,19 @@ from dateutil.relativedelta import relativedelta
 
 
 # Create your models here.
+class House(models.Model):
+    name = models.CharField(verbose_name="Name", max_length=100)
+    address = models.CharField(verbose_name="Address", max_length=500)
+
+    def __str__(self):
+        return self.name
+
+
 class Room(models.Model):
     room_number = models.CharField(verbose_name="Room number", max_length=10)
+    house = models.ForeignKey(
+        House, on_delete=models.CASCADE, null=True, blank=True)
+
     max_occupancy = models.PositiveSmallIntegerField(
         verbose_name="Max occupancy", default=3
     )

@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from django.contrib import admin
 from django.http import HttpRequest
 from .models import (
+    House,
     Room,
     Customer,
     Electricity,
@@ -13,17 +14,24 @@ from .models import (
 from django.utils.html import format_html
 
 
+class HouseAdmin(admin.ModelAdmin):
+    list_display = ['name', 'address']
+
+
 class RoomAdmin(admin.ModelAdmin):
     list_display = [
         "room_number",
+        "house",
         "max_occupancy",
         "door_key",
         "electric_device_id",
     ]
+    list_filter = ['house',]
     actions = None
     list_editable = [
         "door_key",
     ]
+    list_display_links = ['room_number']
 
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -41,8 +49,11 @@ class CustomerAdmin(admin.ModelAdmin):
 
 
 class ElectricityAdmin(admin.ModelAdmin):
-    list_display = ["room", "date", "electricity_reading"]
-    list_filter = ['room', 'date']
+    list_display = ["house_name", "room", "date", "electricity_reading"]
+    list_filter = ['room__house', 'room', 'date']
+
+    def house_name(self, obj):
+        return obj.room.house
 
 
 class ContractCustomerInline(admin.TabularInline):
@@ -85,6 +96,7 @@ class ContractAdmin(admin.ModelAdmin):
 
     list_display = [
         "room",
+        "house_name",
         "start_date",
         "end_date",
         "published",
@@ -102,6 +114,7 @@ class ContractAdmin(admin.ModelAdmin):
     ]
 
     list_filter = [
+        "room__house",
         "room",
         "published",
     ]
@@ -112,10 +125,14 @@ class ContractAdmin(admin.ModelAdmin):
 
     save_as = True
 
+    def house_name(self, obj):
+        return obj.room.house
+
 
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = [
         "contract",
+        "house_name",
         "invoice_date",
         "electricity_start",
         "electricity_end",
@@ -129,6 +146,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "updated_at"
     ]
     list_filter = [
+        "contract__room__house",
         "contract__room",
         "is_paid",
     ]
@@ -190,7 +208,11 @@ class InvoiceAdmin(admin.ModelAdmin):
     def show_invoice(self, obj):
         return format_html('<a href="/department/invoices/%d/"> Show </a>' % (obj.pk))
 
+    def house_name(self, obj):
+        return obj.contract.room.house
 
+
+admin.site.register(House, HouseAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Electricity, ElectricityAdmin)
