@@ -105,13 +105,12 @@ class ContractAdmin(admin.ModelAdmin):
         "room",
         "published",
     ]
-    
+
     inlines = [
         ContractCustomerInline,
     ]
 
     save_as = True
-
 
 
 class InvoiceAdmin(admin.ModelAdmin):

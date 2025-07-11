@@ -73,11 +73,13 @@ class Contract(models.Model):
     other_fee_desc = models.CharField(max_length=500, null=True, blank=True)
     customers = models.ManyToManyField(Customer, through="ContractCustomer")
     published = models.BooleanField(default=True)
+
     class Meta:
         ordering = ["-start_date"]
 
     def __str__(self) -> str:
         return f"{self.room.room_number}: {self.start_date} => {self.end_date}"
+
 
 class ContractCustomer(models.Model):
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE)
@@ -101,7 +103,8 @@ class Invoice(models.Model):
     previous_debt = models.PositiveIntegerField(default=0)  # Nợ kỳ trước
     paid_amount = models.PositiveIntegerField(default=0)  # Tiền đã tt trong kỳ
     unpaid_amount = models.PositiveIntegerField(default=0)  # Tiền còn thiếu
-    total_amount = models.PositiveIntegerField(default=0)  # Tổng số tiền trong kỳ
+    total_amount = models.PositiveIntegerField(
+        default=0)  # Tổng số tiền trong kỳ
     paid_date = models.DateField(null=True, blank=True)
     is_paid = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=datetime.now)
@@ -115,7 +118,7 @@ class Invoice(models.Model):
             self.update_total_amount()
         else:
             self.paid_amount = self.total_amount
-            self.unpaid_amount  = 0
+            self.unpaid_amount = 0
         self.updated_at = datetime.now()
         super().save(*args, **kwargs)
 
@@ -129,7 +132,9 @@ class Invoice(models.Model):
         self.cleaning_fee = self.contract.occupants * self.contract.cleaning_fee
         self.charging_fee = self.contract.charging_fee
         self.other_fee = self.contract.other_fee
-        self.previous_debt = get_previous_debt(current_invoice=self, current_date=self.invoice_date, room=self.contract.room)
+
+        self.previous_debt = get_previous_debt(
+            current_invoice=self, current_date=self.invoice_date, room=self.contract.room)
 
         self.total_amount = (
             self.previous_debt
@@ -143,13 +148,14 @@ class Invoice(models.Model):
         )
         self.unpaid_amount = self.total_amount - self.paid_amount
 
+
 def get_previous_debt(current_invoice, current_date, room):
     active_contract = room.contract_set.filter(
         start_date__lte=current_date, end_date__gte=current_date
     ).first()
     if active_contract == None:
         return 0
-    
+
     latest_invoice = active_contract.invoice_set.order_by(
         "-invoice_date"
     ).first()

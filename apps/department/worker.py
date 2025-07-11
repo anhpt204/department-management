@@ -34,6 +34,7 @@ def get_electricity(device_id):
 
     # print(resp)
 
+
 def update_expired_contracts(request):
     try:
         today = datetime.datetime.now().date()
@@ -46,7 +47,6 @@ def update_expired_contracts(request):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
-
 def update_electricity(request):
     try:
         today = datetime.datetime.now().astimezone(timezone('Asia/Bangkok')).date()
@@ -55,7 +55,8 @@ def update_electricity(request):
         for room in rooms:
             print('Room: ', room.room_number)
             # 1. check and get electricity
-            electricity = Electricity.objects.filter(room=room, date=today).first()
+            electricity = Electricity.objects.filter(
+                room=room, date=today).first()
             energy_total = 0
             if electricity is not None:
                 energy_total = electricity.electricity_reading
@@ -65,9 +66,9 @@ def update_electricity(request):
             active_contract = room.contract_set.filter(
                 start_date__lte=today, end_date__gte=today
             ).first()
-            
+
             print('active contract: ', active_contract)
-            
+
             local_today = datetime.datetime.now().astimezone(timezone('Asia/Bangkok'))
             print('today: ', local_today)
 
@@ -77,7 +78,8 @@ def update_electricity(request):
             need_create_new_invoice = False
             print("today is billing day: ", is_today_billing_day)
             if is_today_billing_day:
-                invoice_today = active_contract.invoice_set.filter(invoice_date=today).first()
+                invoice_today = active_contract.invoice_set.filter(
+                    invoice_date=today).first()
                 print('invoice today: ', invoice_today)
                 need_create_new_invoice = invoice_today == None
 
@@ -97,7 +99,8 @@ def update_electricity(request):
             if need_create_new_invoice:
                 electricity_start = active_contract.electricity_start_reading
                 is_not_first_invoice = active_contract.invoice_set.first() != None
-                previous_debt = get_previous_debt(current_invoice=None, current_date=today, room=room)
+                previous_debt = get_previous_debt(
+                    current_invoice=None, current_date=today, room=room)
 
                 if is_not_first_invoice:
                     last_billing_date = today - relativedelta(months=1)
@@ -106,13 +109,12 @@ def update_electricity(request):
                         date=last_billing_date,
                     ).first()
 
-                    print('electricity of last billing date: ', electricity_of_last_billing_date.electricity_reading)
-                    if electricity_of_last_billing_date == None:
-                        continue
-
-                    electricity_start = (
-                        electricity_of_last_billing_date.electricity_reading
-                    )
+                    if electricity_of_last_billing_date != None:
+                        print('electricity of last billing date: ',
+                              electricity_of_last_billing_date.electricity_reading)
+                        electricity_start = (
+                            electricity_of_last_billing_date.electricity_reading
+                        )
 
                 new_invoice = Invoice(
                     contract=active_contract,
