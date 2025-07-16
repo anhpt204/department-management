@@ -13,6 +13,19 @@ class House(models.Model):
         return self.name
 
 
+class UserHouse(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    house = models.ForeignKey(House, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'house')  # Đảm bảo không bị trùng
+        verbose_name = "User-House"
+        verbose_name_plural = "User-Houses"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.house.name}"
+
+
 class Room(models.Model):
     room_number = models.CharField(verbose_name="Room number", max_length=10)
     house = models.ForeignKey(

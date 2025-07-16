@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.http import HttpRequest
 from .models import (
     House,
+    UserHouse,
     Room,
     Customer,
     Electricity,
@@ -14,8 +15,72 @@ from .models import (
 from django.utils.html import format_html
 
 
+class HouseFilterBase(admin.SimpleListFilter):
+    title = 'House'
+    parameter_name = 'house'
+
+    # field_name là tên field liên kết đến House (vd: 'house', 'room__house')
+    field_name = None
+
+    def lookups(self, request, model_admin):
+        if request.user.is_superuser:
+            houses = House.objects.all()
+        else:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            houses = House.objects.filter(id__in=user_houses)
+        return [(h.id, h.name) for h in houses]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            filter_kwargs = {f"{self.field_name}__id": self.value()}
+            return queryset.filter(**filter_kwargs)
+        return queryset
+
+
+class RoomHouseFilter(HouseFilterBase):
+    field_name = 'house'
+
+
+class ContractHouseFilter(HouseFilterBase):
+    field_name = 'room__house'
+
+
+class ElectricityHouseFilter(HouseFilterBase):
+    field_name = 'room__house'
+
+
+class InvoiceHouseFilter(HouseFilterBase):
+    field_name = 'contract__room__house'
+
+
+class CustomerHouseFilter(HouseFilterBase):
+    field_name = 'contractcustomer__contract__room__house'
+
+
 class HouseAdmin(admin.ModelAdmin):
     list_display = ['name', 'address']
+
+    # Giới hạn danh sách House theo user
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(id__in=user_houses)
+
+    # Nếu user không phải superuser, chỉ cho phép chọn House mà họ quản lý
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "house" and not request.user.is_superuser:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            kwargs["queryset"] = House.objects.filter(id__in=user_houses)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class UserHouseAdmin(admin.ModelAdmin):
+    list_display = ['user', 'house']
 
 
 class RoomAdmin(admin.ModelAdmin):
@@ -26,12 +91,28 @@ class RoomAdmin(admin.ModelAdmin):
         "door_key",
         "electric_device_id",
     ]
-    list_filter = ['house',]
+    list_filter = [RoomHouseFilter,]
     actions = None
     list_editable = [
+        "house",
         "door_key",
     ]
     list_display_links = ['room_number']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(house_id__in=user_houses)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "house" and not request.user.is_superuser:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            kwargs["queryset"] = House.objects.filter(id__in=user_houses)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class CustomerAdmin(admin.ModelAdmin):
@@ -46,14 +127,42 @@ class CustomerAdmin(admin.ModelAdmin):
         "cccd_image_back",
     ]
     search_fields = ("name", "phone", "cccd")
+    list_filter = [CustomerHouseFilter]
+
+    # Giới hạn dữ liệu hiển thị theo House của user
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(contractcustomer__contract__room__house_id__in=user_houses).distinct()
 
 
 class ElectricityAdmin(admin.ModelAdmin):
     list_display = ["house_name", "room", "date", "electricity_reading"]
-    list_filter = ['room__house', 'room', 'date']
+    list_filter = [ElectricityHouseFilter, 'room', 'date']
 
     def house_name(self, obj):
         return obj.room.house
+
+    # Giới hạn dữ liệu theo house mà user được gán
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(room__house_id__in=user_houses)
+
+    # Dropdown chọn Room chỉ hiển thị Room thuộc House mà user có quyền
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "room" and not request.user.is_superuser:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            kwargs["queryset"] = Room.objects.filter(house_id__in=user_houses)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class ContractCustomerInline(admin.TabularInline):
@@ -114,7 +223,7 @@ class ContractAdmin(admin.ModelAdmin):
     ]
 
     list_filter = [
-        "room__house",
+        ContractHouseFilter,
         "room",
         "published",
     ]
@@ -127,6 +236,23 @@ class ContractAdmin(admin.ModelAdmin):
 
     def house_name(self, obj):
         return obj.room.house
+
+    # Giới hạn dữ liệu theo house mà user được gán
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(room__house_id__in=user_houses)
+
+    # Dropdown chọn Room chỉ hiển thị Room thuộc House mà user có quyền
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "room" and not request.user.is_superuser:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            kwargs["queryset"] = Room.objects.filter(house_id__in=user_houses)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -146,7 +272,8 @@ class InvoiceAdmin(admin.ModelAdmin):
         "updated_at"
     ]
     list_filter = [
-        "contract__room__house",
+        # "contract__room__house",
+        InvoiceHouseFilter,
         "contract__room",
         "is_paid",
     ]
@@ -211,8 +338,28 @@ class InvoiceAdmin(admin.ModelAdmin):
     def house_name(self, obj):
         return obj.contract.room.house
 
+    # Giới hạn dữ liệu hiển thị theo House của user
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        user_houses = UserHouse.objects.filter(
+            user=request.user).values_list('house_id', flat=True)
+        return qs.filter(contract__room__house_id__in=user_houses)
+
+    # Dropdown chọn Contract chỉ hiển thị các hợp đồng trong House của user
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "contract" and not request.user.is_superuser:
+            user_houses = UserHouse.objects.filter(
+                user=request.user).values_list('house_id', flat=True)
+            kwargs["queryset"] = Contract.objects.filter(
+                room__house_id__in=user_houses)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 admin.site.register(House, HouseAdmin)
+admin.site.register(UserHouse, UserHouseAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Electricity, ElectricityAdmin)
